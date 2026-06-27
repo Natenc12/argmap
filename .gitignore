@@ -1,0 +1,10 @@
+# OS / editor cruft
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# Dependencies & build output (arrive with the React/build step at v2)
+node_modules/
+dist/
+build/
