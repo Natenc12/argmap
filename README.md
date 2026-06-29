@@ -5,13 +5,13 @@ A frontend tool for **mapping and structurally checking arguments**. You lay out
 The wedge: argmap **checks the structure** of an argument (it's graph algorithms under the hood), rather than just drawing a diagram. It never tries to understand what a claim *means* — only the shape of how claims connect.
 
 ## Status
-**Pre-build.** The v1 design is complete; the engine is the next thing to be written. See [`DESIGN.md`](./DESIGN.md) for the full design and the decisions behind it.
+**Engine complete.** The v1 design is done and the full engine (`addClaim`, `connect`, `markPremise`, `checkGraph`) is written by hand and tested. Next up: wiring the engine to a view. See [`DESIGN.md`](./DESIGN.md) for the full design and the decisions behind it.
 
 ## v1 feature
 The **unsupported-assertion check**: every claim must either be marked a premise ("I'm assuming this") or have something supporting it. Anything that's neither gets flagged.
 
 ## Architecture
-- **Engine** (`src/engine.js`) — pure JavaScript: the graph data model, the mutations, and the check. No DOM, no framework. Exposes a small API (`addClaim`, `connect`, `markPremise`, `check`).
+- **Engine** (`src/engine.js`) — pure JavaScript: the graph data model, the mutations, and the check. No DOM, no framework. Exposes a small API (`addClaim`, `connect`, `markPremise`, `checkGraph`).
 - **View** (`src/view.js`) — a plain list UI that drives the engine through that API. Vanilla for v1; a React UI (with a canvas) is planned for v2. The engine doesn't change when the view does.
 
 ## Tech
