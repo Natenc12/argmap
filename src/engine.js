@@ -15,7 +15,7 @@
 // Takes in the current graph and the text of the new claim
 // Returns a new graph with the new claim added
 function addClaim(graph, text) {
-    var newClaim = { id: graph.nextId, text: text, isPremise: false };
+    let newClaim = { id: graph.nextId, text: text, isPremise: false };
 
     return {
         ...graph,
@@ -32,7 +32,7 @@ function connect(graph, from, to) {
     // No operation if user tries to connect a claim to itself (the UI grays this out, so it's just a safety net)
     if (from === to) { return graph; }
 
-    var newEdge = { from: from, to: to };
+    let newEdge = { from: from, to: to };
 
     return {
         ...graph,
