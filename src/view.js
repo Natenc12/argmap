@@ -1,27 +1,32 @@
 // argmap view — vanilla list UI. Drives the engine ONLY through its API
 // (addClaim / connect / markPremise / check); never reaches into the lists directly.
 //
-// renderGraph(graph, flagged) draws graph.claims into #app as a numbered list; each row
-// is labelled [premise] / [supported by: …] / [no support]; claims in `flagged` render
-// red. This is the disposable layer — replaced by a React UI at v2. See ../DESIGN.md.
+// renderGraph(graph) draws graph.claims into #app as a numbered list; each row is
+// labelled [premise] / [supported by: …] / [no support]. This is the disposable
+// layer — replaced by a React UI at v2. See ../DESIGN.md.
 //
-// Wired so far: Add claim, Check (lights up unsupported assertions).
-// TODO: the 3-state machine (Viewing / Selected / Supporting) — markPremise + connect.
+// State machine (viewing / selected / supporting) drives interactivity: transition() is the
+// pure state->state function; handleTransition() runs it + the side effects (selectedClaim,
+// engine calls) + re-render. Add / Check / connect wired. TODO: markPremise; show the
+// supports button only on the selected row.
+
 
 let graph = {
     claims: [
-        { id: 1, text: "A", isPremise: true },
-        { id: 2, text: "B", isPremise: false },
-        { id: 3, text: "C", isPremise: false },
-        { id: 4, text: "D", isPremise: false }
+        { id: 1, text: "People feel sad when cute things are harmed", isPremise: true },
+        { id: 2, text: "Making people sad is wrong", isPremise: true },
+        { id: 3, text: "Animals are cute", isPremise: false },
+        { id: 4, text: "Eating animals is wrong because they are cute", isPremise: false }
     ],
     edges: [
-        { from: 1, to: 2 },
         { from: 1, to: 3 },
-        { from: 2, to: 3 }
+        { from: 2, to: 4 },
     ],
     nextId: 5
 };
+
+let selectedClaim = null;
+let currentState = "viewing";
 
 function renderGraph(graph, flagged = []) {
 
@@ -44,7 +49,33 @@ function renderGraph(graph, flagged = []) {
         let row = document.createElement("div");
         row.textContent = currentClaim;
 
-        let isFlagged = flagged.some(c => c.id === claim.id );
+        let supportsBtn = document.createElement("button");
+        supportsBtn.textContent = "supports...";
+        supportsBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (currentState === "selected" && selectedClaim === claim) {
+                handleTransition(claim, "startSupport")
+            }
+        })
+
+        row.appendChild(supportsBtn);
+
+        row.addEventListener("click", () => {
+
+            if (currentState === "viewing") {
+                handleTransition(claim, "selectClaim");
+            }
+            if (currentState === "selected") {
+                // Select a new row when one is already selected
+                handleTransition(claim, "selectClaim")
+            }
+            if (currentState === "supporting") {
+                handleTransition(claim, "pickTarget");
+            }
+
+        })
+
+        let isFlagged = flagged.some(c => c.id === claim.id);
 
         if (isFlagged) {
             row.classList.add("flagged");
@@ -54,6 +85,34 @@ function renderGraph(graph, flagged = []) {
         app.appendChild(row);
 
     });
+}
+
+function transition(state, event) {
+    if (event === "selectClaim"  && state === "viewing")    return "selected";
+    if (event === "selectClaim"  && state === "selected")   return "selected";
+    if (event === "startSupport" && state === "selected")   return "supporting";
+    if (event === "pickTarget"   && state === "supporting") return "viewing";
+
+    return state;
+}
+
+function handleTransition(claim, event) {
+
+    if (currentState === "viewing" && event === "selectClaim") {
+        selectedClaim = claim;
+    }
+
+    if (currentState === "selected" && event === "selectClaim") {
+        selectedClaim = claim;
+    }
+
+    if (currentState === "supporting" && event === "pickTarget") {
+        graph = connect(graph, selectedClaim.id, claim.id);
+    }
+
+    currentState = transition(currentState, event);
+    renderGraph(graph);
+
 }
 
 function handleAdd() {
